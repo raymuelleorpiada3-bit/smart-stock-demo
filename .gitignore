@@ -1,0 +1,22 @@
+# Private local database connection: make a copy of the example after cloning.
+**/php/config/db_connection.php
+
+# Only the clean demo SQL belongs in this repository.
+*.sql
+!database/groupmate_clean_setup.sql
+!sales_monitoring_migration.sql
+*.sql.gz
+*.sql.zip
+private-backups/
+backups/
+
+# Local runtime files and temporary archives.
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.env.*
+*.zip
+.DS_Store
+Thumbs.db

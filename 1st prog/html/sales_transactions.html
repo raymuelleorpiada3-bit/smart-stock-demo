@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sales Transactions</title>
+    <link rel="stylesheet" href="<?php echo isset($cssPath) ? htmlspecialchars($cssPath) : '../css/style.css'; ?>" />
+  </head>
+  <body class="admin-body">
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-logo">SS</div>
+          <div>
+            <h1>Smart Stock AI</h1>
+            <p>System</p>
+          </div>
+        </div>
+        <div class="profile-card">
+          <div class="profile-avatar">
+            <?php echo strtoupper(substr($_SESSION['first_name'], 0, 1)); ?>
+          </div>
+          <div>
+            <strong
+              ><?php echo htmlspecialchars($_SESSION['first_name'] . ' ' . $_SESSION['last_name']); ?></strong
+            >
+            <p><?php echo htmlspecialchars(ucfirst($role)); ?></p>
+          </div>
+        </div>
+        <nav class="menu">
+          <a class="menu-item" href="../dashboard.php">Dashboard</a>
+          <a class="menu-item" href="../products/product_management.php"
+            >Product Management</a
+          >
+          <a class="menu-item" href="../inventory/inventory_tracking.php"
+            >Stock History</a
+          >
+          <a class="menu-item active" href="sales_transactions.php"
+            >Sales Transactions</a
+          >
+          <a class="menu-item" href="../inventory/low_stock.php">Low Stock Alerts</a>
+          <a class="menu-item" href="../reports/reports.php">Reports & Analytics</a>
+          <a class="menu-item" href="../users/user_management.php">User Management</a>
+        </nav>
+      </aside>
+      <main class="main-content">
+        <header class="topbar">
+          <div>
+            <h2>Sales Transactions</h2>
+            <p>Record a completed checkout and monitor your store's products.</p>
+          </div>
+          <form method="POST" action="../auth/logout.php">
+            <button type="submit" class="btn btn-logout">Logout</button>
+          </form>
+        </header>
+        <?php if ($message): ?>
+        <div class="alert success-alert"><?php echo htmlspecialchars($message); ?></div>
+        <?php endif; ?>
+        <?php if ($error): ?>
+        <div class="alert error-alert"><?php echo htmlspecialchars($error); ?></div>
+        <?php endif; ?>
+
+        <section class="panel-card">
+          <div class="panel-header">
+            <h3>Complete a Sale</h3>
+          </div>
+          <p>Scan or type a barcode. Record the sale only after checkout is completed.</p>
+          <?php if (empty($products)): ?>
+          <p>Add a product with a barcode in Product Management first.</p>
+          <?php else: ?>
+          <form action="record_sale.php" method="POST" class="panel-form sale-form" id="sale-form">
+            <input type="hidden" name="sale_csrf" value="<?php echo htmlspecialchars($_SESSION['sale_csrf']); ?>" />
+            <label for="sale-barcode">Barcode / SKU</label>
+            <input id="sale-barcode" name="product_barcode" type="text"
+                   list="sale-barcodes" autocomplete="off" required maxlength="50" autofocus />
+            <datalist id="sale-barcodes">
+              <?php foreach ($products as $product): ?>
+              <?php if ($product['product_barcode']): ?>
+              <option value="<?php echo htmlspecialchars($product['product_barcode']); ?>">
+                <?php echo htmlspecialchars($product['product_name']); ?>
+              </option>
+              <?php endif; ?>
+              <?php endforeach; ?>
+            </datalist>
+            <p id="scan-preview" class="muted-text" aria-live="polite">Waiting for a barcode.</p>
+            <label for="sale-quantity">Quantity sold</label>
+            <input id="sale-quantity" name="quantity" type="number" min="1" max="10000" value="1" required />
+            <button type="submit" class="btn btn-primary">Complete Sale</button>
+          </form>
+          <?php endif; ?>
+        </section>
+
+        <section class="panel-card sales-section">
+          <div class="panel-header"><h3>Best Sellers, Last 30 Days</h3></div>
+          <?php if (!$topSellers): ?>
+          <p>No completed sales recorded in the last 30 days.</p>
+          <?php else: ?>
+          <ol class="best-sellers">
+            <?php foreach ($topSellers as $row): ?>
+            <li><span><?php echo htmlspecialchars($row['product_name']); ?></span>
+                <strong><?php echo number_format($row['sold_30d']); ?> sold</strong></li>
+            <?php endforeach; ?>
+          </ol>
+          <?php endif; ?>
+        </section>
+
+        <section class="panel-card sales-section">
+          <div class="panel-header">
+            <h3>Product Monitoring</h3>
+            <span class="muted-text">30-day sales baseline; not trained AI</span>
+          </div>
+          <?php if ($analysisStatus): ?>
+          <div class="alert error-alert"><?php echo htmlspecialchars($analysisStatus); ?></div>
+          <?php endif; ?>
+          <div class="table-responsive">
+            <table class="product-table">
+              <thead><tr><th>Product</th><th>Barcode</th><th>Current stock</th>
+                <th>Sold, last 30 days</th><th>Forecast sales, next 30 days</th>
+                <th>Projected stock</th><th>Assessment</th></tr></thead>
+              <tbody>
+                <?php if (!$products): ?>
+                <tr><td colspan="7">No products at this store yet.</td></tr>
+                <?php endif; ?>
+                <?php foreach ($products as $product): ?>
+                <?php $analysis = $analysisById[(int)$product['product_id']] ?? null; ?>
+                <?php $signal = $signalsById[(int)$product['product_id']] ?? null; ?>
+                <tr>
+                  <td><?php echo htmlspecialchars($product['product_name']); ?></td>
+                  <td><?php echo htmlspecialchars($product['product_barcode'] ?: 'Not set'); ?></td>
+                  <td><?php echo number_format((int)$product['product_quantity']); ?></td>
+                  <td><?php echo $signal ? number_format($signal['sold_30d']) : '0'; ?></td>
+                  <td><?php echo $analysis ? number_format($analysis['forecast_sales_30d']) : '—'; ?></td>
+                  <td><?php echo $analysis ? number_format($analysis['projected_stock_30d']) : '—'; ?></td>
+                  <td title="<?php echo htmlspecialchars($analysis['reason'] ?? ''); ?>">
+                    <?php echo $analysis ? htmlspecialchars(ucwords(str_replace('_', ' ', $analysis['risk']))) : 'Unavailable'; ?>
+                    <?php if ($analysis): ?><small class="muted-text assessment-reason"><?php echo htmlspecialchars($analysis['reason']); ?></small><?php endif; ?>
+                  </td>
+                </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          </div>
+          <p class="muted-text">Possible deadstock means stock remains after at least 90 days with no recorded sales.
+            New products are given time to collect history. Product counts update when this page is refreshed.</p>
+        </section>
+
+        <section class="panel-card sales-section">
+          <div class="panel-header"><h3>Recent Completed Sales</h3></div>
+          <div class="table-responsive">
+            <table class="product-table">
+              <thead><tr><th>Date</th><th>Product</th><th>Barcode</th><th>Quantity</th></tr></thead>
+              <tbody>
+                <?php if (!$recentSales): ?>
+                <tr><td colspan="4">No completed sales recorded yet.</td></tr>
+                <?php endif; ?>
+                <?php foreach ($recentSales as $sale): ?>
+                <tr><td><?php echo htmlspecialchars($sale['sale_date']); ?></td>
+                  <td><?php echo htmlspecialchars($sale['product_name']); ?></td>
+                  <td><?php echo htmlspecialchars($sale['product_barcode'] ?: '—'); ?></td>
+                  <td><?php echo number_format((int)$sale['sale_quantity']); ?></td></tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+    <script>
+      const products = <?php echo json_encode($products, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+      const form = document.getElementById('sale-form');
+      if (form) {
+        const barcode = document.getElementById('sale-barcode');
+        const preview = document.getElementById('scan-preview');
+        barcode.addEventListener('input', () => {
+          const item = products.find(p => p.product_barcode === barcode.value.trim());
+          preview.textContent = item ? `${item.product_name} — ${item.product_quantity} in stock` : 'No matching barcode at your store.';
+        });
+        // Many scanners append Enter. Only the explicit button records a sale.
+        form.addEventListener('keydown', event => {
+          if (event.key === 'Enter' && event.target.tagName !== 'BUTTON') event.preventDefault();
+        });
+        form.addEventListener('submit', event => {
+          if (!confirm('Has the customer completed checkout? Record this sale?')) event.preventDefault();
+        });
+        // Other browser sessions catch up without interrupting a barcode being entered.
+        setInterval(() => {
+          if (document.visibilityState === 'visible' && barcode.value.trim() === '') location.reload();
+        }, 15000);
+      }
+    </script>
+  </body>
+</html>

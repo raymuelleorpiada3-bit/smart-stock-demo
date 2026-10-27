@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stock History</title>
+    <link rel="stylesheet" href="<?php echo htmlspecialchars($cssPath, ENT_QUOTES, 'UTF-8'); ?>" />
+  </head>
+  <body class="admin-body">
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand"><div class="brand-logo">SS</div><div>
+          <h1>Smart Stock AI</h1><p>System</p>
+        </div></div>
+        <div class="profile-card">
+          <div class="profile-avatar"><?php echo htmlspecialchars(strtoupper(substr($_SESSION['first_name'] ?? '', 0, 1)), ENT_QUOTES, 'UTF-8'); ?></div>
+          <div>
+            <strong><?php echo htmlspecialchars(($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></strong>
+            <p><?php echo htmlspecialchars(ucfirst($role), ENT_QUOTES, 'UTF-8'); ?></p>
+          </div>
+        </div>
+        <nav class="menu">
+          <a class="menu-item" href="../dashboard.php">Dashboard</a>
+          <a class="menu-item" href="../products/product_management.php">Product Management</a>
+          <a class="menu-item active" href="inventory_tracking.php">Stock History</a>
+          <a class="menu-item" href="../sales/sales_transactions.php">Sales Transactions</a>
+          <a class="menu-item" href="low_stock.php">Low Stock Alerts</a>
+          <a class="menu-item" href="../reports/reports.php">Reports &amp; Analytics</a>
+          <a class="menu-item" href="../users/user_management.php">User Management</a>
+        </nav>
+      </aside>
+      <main class="main-content">
+        <header class="topbar">
+          <div><h2>Stock History</h2><p>See the stock on hand and the changes recorded for your store.</p></div>
+          <form method="POST" action="../auth/logout.php"><button type="submit" class="btn btn-logout">Logout</button></form>
+        </header>
+
+        <?php foreach ($notices as $notice): ?>
+        <div class="alert error-alert" role="status"><?php echo htmlspecialchars($notice, ENT_QUOTES, 'UTF-8'); ?></div>
+        <?php endforeach; ?>
+
+        <section class="panel-card sales-section" aria-labelledby="stock-filter-title">
+          <div class="panel-header"><h3 id="stock-filter-title">Find stock changes</h3></div>
+          <form method="GET" action="inventory_tracking.php" class="panel-form" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));align-items:end">
+            <?php if ($isOwner): ?>
+            <div><label for="history-scope">Stores</label>
+              <select id="history-scope" name="scope">
+                <option value="mine" <?php echo !$allStores ? 'selected' : ''; ?>>My store</option>
+                <option value="all" <?php echo $allStores ? 'selected' : ''; ?>>All stores</option>
+              </select>
+            </div>
+            <?php endif; ?>
+            <div><label for="history-product">Product</label>
+              <select id="history-product" name="product_id">
+                <option value="">All products</option>
+                <?php foreach ($products as $product): ?>
+                <option value="<?php echo (int)$product['product_id']; ?>" <?php echo $productId === (int)$product['product_id'] ? 'selected' : ''; ?>>
+                  <?php echo htmlspecialchars($product['product_name'] ?: 'Unnamed product', ENT_QUOTES, 'UTF-8'); ?>
+                  <?php if ($allStores): ?> (<?php echo htmlspecialchars($product['store_name'] ?: 'Store #' . $product['store_id'], ENT_QUOTES, 'UTF-8'); ?>)<?php endif; ?>
+                </option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+            <div><label for="history-type">Change</label>
+              <select id="history-type" name="type">
+                <option value="">All changes</option>
+                <option value="add" <?php echo $movementType === 'add' ? 'selected' : ''; ?>>Stock added</option>
+                <option value="reduce" <?php echo $movementType === 'reduce' ? 'selected' : ''; ?>>Stock reduced / sale</option>
+              </select>
+            </div>
+            <div><label for="history-from">From date</label>
+              <input id="history-from" name="from" type="date" value="<?php echo htmlspecialchars($fromDate, ENT_QUOTES, 'UTF-8'); ?>" />
+            </div>
+            <div><label for="history-to">To date</label>
+              <input id="history-to" name="to" type="date" value="<?php echo htmlspecialchars($toDate, ENT_QUOTES, 'UTF-8'); ?>" />
+            </div>
+            <div><button type="submit" class="btn btn-primary">Apply filters</button></div>
+          </form>
+          <p class="muted-text"><a href="inventory_tracking.php" style="color:#67e8f9">Clear filters</a></p>
+        </section>
+
+        <section class="panel-card sales-section" aria-labelledby="current-stock-title">
+          <div class="panel-header"><h3 id="current-stock-title">Current stock</h3>
+            <span class="muted-text"><?php echo number_format(count($stockProducts)); ?> products · <?php echo number_format($totalStock); ?> units on hand</span>
+          </div>
+          <div class="table-responsive"><table class="product-table">
+            <thead><tr><th scope="col">Product</th><th scope="col">Barcode</th><?php if ($allStores): ?><th scope="col">Store</th><?php endif; ?><th scope="col">On hand now</th></tr></thead>
+            <tbody>
+              <?php if (!$stockProducts): ?><tr><td colspan="<?php echo $allStores ? 4 : 3; ?>">No products found for this store.</td></tr><?php endif; ?>
+              <?php foreach ($stockProducts as $product): ?>
+              <tr>
+                <td><?php echo htmlspecialchars($product['product_name'] ?: 'Unnamed product', ENT_QUOTES, 'UTF-8'); ?></td>
+                <td><?php echo htmlspecialchars($product['product_barcode'] ?: '—', ENT_QUOTES, 'UTF-8'); ?></td>
+                <?php if ($allStores): ?><td><?php echo htmlspecialchars($product['store_name'] ?: 'Store #' . $product['store_id'], ENT_QUOTES, 'UTF-8'); ?></td><?php endif; ?>
+                <td><?php echo number_format((int)$product['product_quantity']); ?></td>
+              </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table></div>
+          <p class="muted-text">Current stock is live. Date and change filters apply only to the history below.</p>
+        </section>
+
+        <section class="panel-card sales-section" aria-labelledby="history-title">
+          <div class="panel-header"><h3 id="history-title">Recorded stock changes</h3>
+            <span class="muted-text"><?php echo number_format($movementCount); ?> records</span>
+          </div>
+          <div class="table-responsive"><table class="product-table">
+            <thead><tr><th scope="col">Date &amp; time</th><th scope="col">Product</th><?php if ($allStores): ?><th scope="col">Store</th><?php endif; ?><th scope="col">Change</th><th scope="col">Quantity</th><th scope="col">Before</th><th scope="col">After</th><th scope="col">Recorded by</th><th scope="col">Details</th></tr></thead>
+            <tbody>
+              <?php if (!$movements): ?><tr><td colspan="<?php echo $allStores ? 9 : 8; ?>">No recorded stock changes match these filters. Earlier changes cannot appear if they were never logged.</td></tr><?php endif; ?>
+              <?php foreach ($movements as $movement): ?>
+              <tr>
+                <td><?php echo htmlspecialchars($movement['movement_date'] ?: '—', ENT_QUOTES, 'UTF-8'); ?></td>
+                <td><?php echo htmlspecialchars($movement['product_name'] ?: 'Product #' . $movement['product_id'], ENT_QUOTES, 'UTF-8'); ?></td>
+                <?php if ($allStores): ?><td><?php echo htmlspecialchars($movement['store_name'] ?: 'Store #' . $movement['store_id'], ENT_QUOTES, 'UTF-8'); ?></td><?php endif; ?>
+                <td><?php echo htmlspecialchars(ucfirst($movement['movement_type']), ENT_QUOTES, 'UTF-8'); ?></td>
+                <td><?php echo $movement['movement_type'] === 'reduce' ? '−' : '+'; ?><?php echo number_format((int)$movement['quantity']); ?></td>
+                <td><?php echo $movement['previous_quantity'] === null ? '—' : number_format((int)$movement['previous_quantity']); ?></td>
+                <td><?php echo $movement['new_quantity'] === null ? '—' : number_format((int)$movement['new_quantity']); ?></td>
+                <td><?php echo htmlspecialchars(trim(($movement['users_fname'] ?? '') . ' ' . ($movement['users_lname'] ?? '')) ?: 'User #' . $movement['users_id'], ENT_QUOTES, 'UTF-8'); ?></td>
+                <td><?php echo htmlspecialchars($movement['notes'] ?: '—', ENT_QUOTES, 'UTF-8'); ?></td>
+              </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table></div>
+          <?php if ($pageCount > 1): ?>
+          <nav aria-label="History pages" style="display:flex;align-items:center;gap:16px;margin-top:16px">
+            <?php if ($page > 1): ?><a href="?<?php echo htmlspecialchars(http_build_query($pageParams + ['page' => $page - 1]), ENT_QUOTES, 'UTF-8'); ?>" style="color:#67e8f9">Previous</a><?php endif; ?>
+            <span>Page <?php echo $page; ?> of <?php echo $pageCount; ?></span>
+            <?php if ($page < $pageCount): ?><a href="?<?php echo htmlspecialchars(http_build_query($pageParams + ['page' => $page + 1]), ENT_QUOTES, 'UTF-8'); ?>" style="color:#67e8f9">Next</a><?php endif; ?>
+          </nav>
+          <?php endif; ?>
+          <p class="muted-text">New product stock, stock adjustments, and completed sales appear here once history recording is enabled.</p>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

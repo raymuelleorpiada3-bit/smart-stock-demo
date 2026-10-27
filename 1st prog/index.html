@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login & Registration</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <section class="hero-panel">
+        <div class="hero-content">
+          <span class="hero-tag">Smart Stock AI</span>
+          <h1>Inventory intelligence for modern stores</h1>
+          <p>Login or register to manage stock, orders, and AI-driven predictions from one easy dashboard.</p>
+        </div>
+        <div class="hero-visual"></div>
+      </section>
+
+      <section class="auth-panel">
+        <div class="container">
+          <div class="auth-brand">
+            <div class="brand-mark">SS</div>
+            <div class="brand-copy">
+              <h1>Smart Stock AI</h1>
+              <p>Fast inventory sign in and account setup</p>
+            </div>
+          </div>
+          <div class="auth-card">
+            <div class="auth-entry" id="auth-entry" style="display: none;">
+        <div class="entry-card">
+          <h2>Welcome</h2>
+          <p>
+            Select login or registration to continue to your inventory
+            dashboard.
+          </p>
+          <div class="entry-actions">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              onclick="showAuthForm('login')"
+            >
+              Login
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              onclick="showAuthForm('register')"
+            >
+              Register
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Login Form -->
+      <div class="form-container" id="login-form" style="display: none">
+        <div class="form-header">
+          <h2>Sign In</h2>
+          <p class="form-subtitle">
+            Access your dashboard, inventory, and sales insights.
+          </p>
+        </div>
+        <form method="POST" action="php/auth/login.php">
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              placeholder="Enter your email"
+              required
+            />
+          </div>
+          <div class="form-group password-field">
+            <label for="password">Password</label>
+            <div class="password-wrapper">
+              <input
+                type="password"
+                id="password"
+                name="password"
+                placeholder="Enter your password"
+                required
+              />
+              <button
+                type="button"
+                class="password-toggle"
+                onclick="
+                  togglePasswordField('password');
+                  return false;
+                "
+                tabindex="-1"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary">Sign In</button>
+          <p class="toggle-text">
+            Don't have an account?
+            <a href="#" onclick="showAuthForm('register')">Create one here</a>
+          </p>
+        </form>
+        <div id="login-message"></div>
+      </div>
+
+      <!-- Registration Form -->
+      <div class="form-container" id="register-form" style="display: none">
+        <div class="form-header">
+          <h2>Create Account</h2>
+          <p class="form-subtitle">
+            Create your account and connect your store.
+          </p>
+        </div>
+        <form method="POST" action="php/auth/register.php">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="first-name">First Name</label>
+              <input
+                type="text"
+                id="first-name"
+                name="first_name"
+                placeholder="John"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="middle-name">Middle Name</label>
+              <input
+                type="text"
+                id="middle-name"
+                name="middle_name"
+                placeholder="Robert"
+              />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="suffix-name">Suffix</label>
+              <input
+                type="text"
+                id="suffix-name"
+                name="suffix_name"
+                placeholder="Jr., Sr."
+              />
+            </div>
+            <div class="form-group">
+              <label for="last-name">Last Name</label>
+              <input
+                type="text"
+                id="last-name"
+                name="last_name"
+                placeholder="Doe"
+                required
+              />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="reg-email">Email Address</label>
+            <input
+              type="email"
+              id="reg-email"
+              name="email"
+              placeholder="john.doe@example.com"
+              required
+            />
+          </div>
+          <div class="form-row">
+            <div class="form-group password-field">
+              <label for="reg-password">Password</label>
+              <div class="password-wrapper">
+                <input
+                  type="password"
+                  id="reg-password"
+                  name="password"
+                  placeholder="Min. 6 characters"
+                  required
+                />
+                <button
+                  type="button"
+                  class="password-toggle"
+                  onclick="
+                    togglePasswordField('reg-password');
+                    return false;
+                  "
+                  tabindex="-1"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path
+                      d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+                    ></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="form-group password-field">
+              <label for="confirm-password">Confirm Password</label>
+              <div class="password-wrapper">
+                <input
+                  type="password"
+                  id="confirm-password"
+                  name="confirm_password"
+                  placeholder="Repeat password"
+                  required
+                />
+                <button
+                  type="button"
+                  class="password-toggle"
+                  onclick="
+                    togglePasswordField('confirm-password');
+                    return false;
+                  "
+                  tabindex="-1"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path
+                      d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+                    ></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="form-section">
+            <h3>Location Information</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="province">Province</label>
+                <select id="province" name="province_id" required>
+                  <option value="">Select Province</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="municipality">Municipality</label>
+                <select
+                  id="municipality"
+                  name="municipality_id"
+                  required
+                  disabled
+                >
+                  <option value="">Select Municipality</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="barangay">Barangay</label>
+              <select id="barangay" name="barangay_id" required disabled>
+                <option value="">Select Barangay</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-section">
+            <h3>Store Information</h3>
+            <div class="form-group">
+              <label for="store-option">Store Option</label>
+              <div class="radio-group">
+                <label class="radio-label">
+                  <input
+                    type="radio"
+                    name="store_option"
+                    value="existing"
+                    checked
+                    onchange="toggleStoreInput()"
+                  />
+                  <span>Select Existing Store</span>
+                </label>
+                <label class="radio-label">
+                  <input
+                    type="radio"
+                    name="store_option"
+                    value="new"
+                    onchange="toggleStoreInput()"
+                  />
+                  <span>Create New Store</span>
+                </label>
+              </div>
+            </div>
+            <div class="form-group" id="existing-store-group">
+              <label for="store-select">Select Store</label>
+              <select id="store-select" name="store_id">
+                <option value="">Choose a Store</option>
+              </select>
+            </div>
+            <div class="form-group" id="new-store-group" style="display: none">
+              <label for="custom-store-name">Store Name</label>
+              <input
+                type="text"
+                id="custom-store-name"
+                name="custom_store_name"
+                placeholder="Enter your store name"
+              />
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary">Create Account</button>
+          <p class="toggle-text">
+            Already have an account?
+            <a href="#" onclick="showAuthForm('login')">Sign in here</a>
+          </p>
+        </form>
+        <div id="register-message"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script src="js/script.js"></script>
+  </body>
+</html>

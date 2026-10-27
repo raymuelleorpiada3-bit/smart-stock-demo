@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="<?php echo isset($cssPath) ? htmlspecialchars($cssPath) : '../css/style.css'; ?>" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body class="admin-body">
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-logo">SS</div>
+          <div>
+            <h1>Smart Stock AI</h1>
+            <p>System</p>
+          </div>
+        </div>
+        <div class="profile-card">
+          <div class="profile-avatar">
+            <?php echo strtoupper(substr($_SESSION['first_name'], 0, 1)); ?>
+          </div>
+          <div>
+            <strong
+              ><?php echo htmlspecialchars($_SESSION['first_name'] . ' ' . $_SESSION['last_name']); ?></strong
+            >
+            <p><?php echo htmlspecialchars(ucfirst($role)); ?></p>
+          </div>
+        </div>
+        <nav class="menu">
+          <a class="menu-item active" href="dashboard.php">Dashboard</a>
+          <a class="menu-item" href="products/product_management.php"
+            >Product Management</a
+          >
+          <a class="menu-item" href="inventory/inventory_tracking.php"
+            >Stock History</a
+          >
+          <a class="menu-item" href="sales/sales_transactions.php"
+            >Sales Transactions</a
+          >
+          <a class="menu-item" href="inventory/low_stock.php">Low Stock Alerts</a>
+          <a class="menu-item" href="reports/reports.php">Reports & Analytics</a>
+          <a class="menu-item" href="users/user_management.php">User Management</a>
+        </nav>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <div>
+            <h2>Dashboard</h2>
+            <p>Overview & AI insights</p>
+          </div>
+          <div class="topbar-actions">
+            <div class="user-chip">
+              <span
+                ><?php echo htmlspecialchars($_SESSION['first_name']); ?></span
+              >
+              <small><?php echo htmlspecialchars(ucfirst($role)); ?></small>
+            </div>
+            <form method="POST" action="auth/logout.php">
+              <button type="submit" class="btn btn-logout">Logout</button>
+            </form>
+          </div>
+        </header>
+
+        <section class="metrics-grid">
+          <article class="metric-card gradient-pink">
+            <div>
+              <p>Weekly Sales</p>
+              <h2><?php echo number_format($weeklySales); ?></h2>
+            </div>
+            <span class="metric-tag">Quantity Sold</span>
+          </article>
+          <article class="metric-card gradient-blue">
+            <div>
+              <p>Weekly Orders</p>
+              <h2><?php echo number_format($weeklyOrders); ?></h2>
+            </div>
+            <span class="metric-tag">Sale records (one product per record)</span>
+          </article>
+          <article class="metric-card gradient-green">
+            <div>
+              <p>AI Predictions</p>
+              <h2><?php echo number_format($predictionCount); ?></h2>
+            </div>
+            <span class="metric-tag"
+              >Average confidence <?php echo $averageConfidence; ?>%</span
+            >
+          </article>
+        </section>
+
+        <section class="charts-row">
+          <div class="chart-panel">
+            <div class="panel-header">
+              <h3>Visit And Sales Statistics</h3>
+              <div class="panel-badges">
+                <span>Products <?php echo $productCount; ?></span>
+                <span>Low stock <?php echo $lowStockCount; ?></span>
+              </div>
+            </div>
+            <canvas id="salesChart"></canvas>
+          </div>
+          <div class="chart-panel donut-panel">
+            <div class="panel-header">
+              <h3>Risk Level Distribution</h3>
+            </div>
+            <canvas id="riskChart"></canvas>
+          </div>
+        </section>
+
+        <section class="prediction-list">
+          <div class="section-header">
+            <h3>Recent AI Predictions</h3>
+            <span>Latest system advice</span>
+          </div>
+          <?php if (!empty($latestPredictions)): ?>
+          <div class="prediction-cards">
+            <?php foreach ($latestPredictions as $prediction): ?>
+            <div class="prediction-card">
+              <div class="prediction-header">
+                <strong
+                  ><?php echo htmlspecialchars($prediction['pred_target_period'] ?? 'Period'); ?></strong
+                >
+                <span
+                  ><?php echo htmlspecialchars($prediction['pred_risk_lvl'] ?? 'N/A'); ?></span
+                >
+              </div>
+              <p>
+                <?php echo htmlspecialchars($prediction['pred_suggested_action'] ?? 'No action suggested'); ?>
+              </p>
+              <div class="prediction-footer">
+                <small
+                  ><?php echo htmlspecialchars($prediction['pred_date']); ?></small
+                >
+                <strong
+                  ><?php echo htmlspecialchars($prediction['pred_confidence_score']); ?>%</strong
+                >
+              </div>
+            </div>
+            <?php endforeach; ?>
+          </div>
+          <?php else: ?>
+          <div class="empty-state">
+            <p>No AI predictions are available yet.</p>
+          </div>
+          <?php endif; ?>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const labels = <?php echo json_encode($chartLabels); ?>;
+      const salesData = <?php echo json_encode($chartSales); ?>;
+      const orderData = <?php echo json_encode($chartOrders); ?>;
+      const riskLabels = <?php echo json_encode($riskLabels); ?>;
+      const riskCounts = <?php echo json_encode($riskCounts); ?>;
+
+      const salesChartCtx = document.getElementById('salesChart').getContext('2d');
+      new Chart(salesChartCtx, {
+          type: 'line',
+          data: {
+              labels,
+              datasets: [
+                  {
+                      label: 'Sales Quantity',
+                      data: salesData,
+                      borderColor: '#6c63ff',
+                      backgroundColor: 'rgba(108, 99, 255, 0.2)',
+                      tension: 0.35,
+                      fill: true,
+                  },
+                  {
+                      label: 'Sale records',
+                      data: orderData,
+                      borderColor: '#22c1c3',
+                      backgroundColor: 'rgba(34, 193, 195, 0.2)',
+                      tension: 0.35,
+                      fill: true,
+                  },
+              ],
+          },
+          options: {
+              responsive: true,
+              plugins: {
+                  legend: { position: 'top' },
+              },
+              scales: {
+                  y: {
+                      beginAtZero: true,
+                      grid: { color: 'rgba(200,200,200,0.15)' },
+                  },
+              },
+          },
+      });
+
+      const riskChartCtx = document.getElementById('riskChart').getContext('2d');
+      if (riskLabels.length > 0) {
+        new Chart(riskChartCtx, {
+            type: 'doughnut',
+            data: {
+                labels: riskLabels,
+                datasets: [{
+                    data: riskCounts,
+                    backgroundColor: ['#ff6f91', '#845bef', '#2ac1bc', '#ffb547', '#7c7cff'],
+                    borderWidth: 0,
+                }],
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' },
+                },
+            },
+        });
+      }
+    </script>
+  </body>
+</html>
